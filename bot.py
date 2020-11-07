@@ -1,7 +1,7 @@
 import json
 import telebot
 import requests
-from telebot import types
+
 
 bot = telebot.TeleBot("1148909884:AAFywUYIklb21bfeGKb8gEnp8P-1Bivdf6A", parse_mode=None)
 
@@ -14,41 +14,41 @@ def start_command(message):
 # Условная авторизация
 @bot.message_handler(regexp="bi20i".lower())
 def send_inf(message):
-    global markup
+    global user
+
     response = requests.get('http://taskbotsibadi.us.aldryn.io/bot/json_response')
     data = json.loads(response.text)
     if message.text.lower() in data:
         sum_labs = 0
         # Счетчик лабораторных, которые не сделанны
-        user = message.text.lower()
+        user = user = message.text.lower()
+        bot.send_message(message.from_user.id, user)
         bot.send_message(message.from_user.id,
                          '%s\n%s' % (data[user]['name'], "Твой рейтинг " + str(data[user]['rating'])))
         for lab in data[user]['labs']:
 
             if data[user]['labs'][lab]['status'] == 0:
-
                 sum_labs += 1
                 bot.send_message(message.from_user.id,
                                  '%s\n%s\n%s' % ("Номер лабы: " + str(lab),
                                                  "Назавание лабы: " + data[user]['labs'][lab]['name'],
                                                  "Задание: " + data[user]['labs'][lab]['description']))
-                # создаются кнопки, количество = количеству не выполненных лаб
-                markup = types.ReplyKeyboardMarkup()
-                keyboard = types.KeyboardButton(str(lab))
-                markup.add(keyboard)
+
         if sum_labs > 0:
+            bot.send_message(message.from_user.id, "Выбери номер лабораторной по которой нужны подсказки:")
 
-            bot.send_message(message.from_user.id, "Выбери номер лабораторной по которой нужны подсказки:",
-                             reply_markup=markup)
+    else:
+        bot.send_message(message.from_user.id, "Такого студента нет ¯\_(ツ)_/¯  \n"
+                                               "Введи другой номер зачетки")
 
-        # В условии подсказки можно вызвать только при условной авторизации,
-        # т.е только полсе того, как пользователь введет свой номер зачетки
-        # выводятся все подсказки поочереди
-        @bot.message_handler()
-        def hints(message):
+    @bot.message_handler()
+    def hints(message):
+        if message.text in data[user]['labs']:
 
             for i in (data[user]['labs'][message.text]['hints']):
-                bot.send_message(message.from_user.id, data[user]['labs'][str(message.text)]['hints'][str(i)])
+                bot.send_message(message.from_user.id, data[user]['labs'][message.text]['hints'][str(i)])
+        else:
+            bot.send_message(message.from_user.id, "Выбери номер лабораторной по которой нужны подсказки:")
 
 
 bot.polling(none_stop=True, interval=0)
