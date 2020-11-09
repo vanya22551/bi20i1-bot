@@ -2,7 +2,6 @@ import json
 import telebot
 import requests
 
-
 bot = telebot.TeleBot("1148909884:AAFywUYIklb21bfeGKb8gEnp8P-1Bivdf6A", parse_mode=None)
 
 
@@ -20,11 +19,9 @@ def send_inf(message):
     data = json.loads(response.text)
     if message.text.lower() in data:
         sum_labs = 0
-        # Счетчик лабораторных, которые не сделанны
+
         user = user = message.text.lower()
-        bot.send_message(message.from_user.id, user)
-        bot.send_message(message.from_user.id,
-                         '%s\n%s' % (data[user]['name'], "Твой рейтинг " + str(data[user]['rating'])))
+        bot.send_message(message.from_user.id, data[user]['name'])
         for lab in data[user]['labs']:
 
             if data[user]['labs'][lab]['status'] == 0:
@@ -43,11 +40,14 @@ def send_inf(message):
 
     @bot.message_handler()
     def hints(message):
-        if message.text in data[user]['labs']:
+        data = json.loads(response.text)
+        try:
 
             for i in (data[user]['labs'][message.text]['hints']):
                 bot.send_message(message.from_user.id, data[user]['labs'][message.text]['hints'][str(i)])
-        else:
+            bot.send_message(message.from_user.id, "Выбери номер лабораторной по которой нужны подсказки:")
+
+        except:
             bot.send_message(message.from_user.id, "Выбери номер лабораторной по которой нужны подсказки:")
 
 
